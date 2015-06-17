@@ -410,8 +410,8 @@ class mt:
           header = [x.replace("\r\n","") for x in header]         
           if (currentdevice != ",".join(header[0:(self.device_tags.index('temperature')+2)])):
             print "\nNew measurement found"
-            print "currentdevice" + currentdevice
-            print "currentdevice new: " + ",".join(header[0:(self.device_tags.index('temperature')+2)]) 
+            #print "currentdevice" + currentdevice
+            print "New Device Data: " + ",".join(header[0:(self.device_tags.index('temperature')+2)]) 
             state = 1
         ######################################################input data to arrays in dictionaries  
         if state==1:
@@ -518,5 +518,7 @@ class mt:
   ####################################################################################################                   
   def addalldatainfolder(self,folder):
     data_files = [(x[0], x[2]) for x in os.walk(folder)]
-    print data_files[0][1]
+    for datafile in data_files[0][1]:
+      print "\n Adding: "+datafile
+      self.adddata(folder+datafile)
                 
