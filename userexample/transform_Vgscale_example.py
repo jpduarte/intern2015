@@ -1,10 +1,12 @@
 #script example to transform scale of data, this targets to transform I-V data with different Vg scale
 #Juan Pablo Duarte
 
-rootfolder = '/home/juan/research'
+rootfolder = '/home/juan/research/intern2015'
 
 #indicate path for folders containing required classes
 import sys
+sys.path.insert(0, rootfolder+'/classesintern')
+
 import matplotlib.pyplot as plt
 import measurementtests as mt
 
