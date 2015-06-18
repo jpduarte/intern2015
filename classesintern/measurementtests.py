@@ -106,6 +106,7 @@ class mt:
     self.filetype = 'SAS'
     self.devices = {}
     self.device_template = {}
+    self.device_info = {}
   def updateparameter(self,name,value):
     #this funtion update a parameter in the model
     if type(value) == type(''):
@@ -438,6 +439,10 @@ class mt:
             if not namedevice in self.devices:
               print "Creating device named "  +namedevice
               self.devices[namedevice]  = {'technology':header[self.device_tags.index('technology')+1],'wafer':header[self.device_tags.index('wafer')+1],'site':header[self.device_tags.index('site')+1],'macro':header[self.device_tags.index('macro')+1],'device':header[self.device_tags.index('device')+1],'temperatures':[],'tests':[]} 
+              
+              self.devices[namedevice]['Wdes'] = self.device_info[namedevice]['Wdes']
+              self.devices[namedevice]['Ldes'] = self.device_info[namedevice]['Ldes']
+              self.devices[namedevice]['Leff'] = self.device_info[namedevice]['Leff'] 
             
             #check if temperature exists 
             temperature = header[self.device_tags.index('temperature')+1]
@@ -468,6 +473,48 @@ class mt:
             count+=1
       #print self.devices[namedevice][temperature][testname]['Vg`']      
       target.close()  
+  ##########################################################################################################    
+  ###############################  add data info of wafer die######################################### 
+  ##########################################################################################################        
+  def add_die_info(self,pathandfile):
+    
+    if self.filetype=='SAS':
+      
+      target = open(pathandfile, 'r')  
+      state = -1 #reading header: technology,wafer,site,macro,device,test,temperature,Vd`,Vg`,Ig,Id,Is 
+
+      for line in target:
+        #print line.index('technology')
+        #########################################################for reading head line
+        if state==-1:
+          #print "A header has been found"
+          line = line.replace("\t"," ")
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")            
+          headernames = str.split(line)
+          #print "Header: "+line     
+          state = 0
+        else:
+          line = line.replace("\t"," ")
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")          
+          header = str.split(line)
+          if True:
+            #DevNum	Wafer	SiteX	SiteY	Macro	Device	Wdes	Ldes
+            #print headernames
+            namedevice= header[headernames.index('Wafer')]
+            namedevice+= ','+header[headernames.index('SiteX')]
+            namedevice+= ','+header[headernames.index('SiteY')]
+            namedevice+= ','+header[headernames.index('Macro')]
+            namedevice+= ','+header[headernames.index('Device')]
+            
+            #check if device exist (check for key in dictionary
+            #print namedevice
+            if not namedevice in self.device_info:
+              print "Creating device named "  +namedevice
+              self.device_info[namedevice]  = {'DevNum':header[headernames.index('DevNum')],'Wafer':header[headernames.index('Wafer')],'SiteX':header[headernames.index('SiteX')],'SiteY':header[headernames.index('SiteY')],'Macro':header[headernames.index('Macro')],'Device':header[headernames.index('Device')],'Wdes':float(header[headernames.index('Wdes')]),'Ldes':float(header[headernames.index('Ldes')]),'Leff':float(header[headernames.index('Ldes')])-0.04} #TODO: do not hard code 0.04 for Leff calculation
+    
+      target.close()        
   ##########################################################################################################    
   ###############################  plot devices ######################################### 
   ##########################################################################################################        
