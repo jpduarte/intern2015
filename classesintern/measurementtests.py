@@ -123,8 +123,9 @@ class mt:
 
       #get index on which data is located for: var_scale_ref, var_dependent, and  var_fixed
       line1 = target.readline()
+      line1 = line1.replace("\r\n","")
+      line1 = line1.replace("\n","")      
       header = str.split(line1,',')
-      header = [x.replace("\r\n","") for x in header]
       
       var_scale_ref_index =  header.index(self.var_scale_ref)
       
@@ -159,8 +160,10 @@ class mt:
       flag2ndline = 1
       for line in target:
         #print line
+        line = line.replace("\r\n","")
+        line = line.replace("\n","")          
         linesplit = str.split(line,',')
-        linesplit = [x.replace("\r\n","") for x in linesplit]
+
         
         if flag2ndline==1:
           deviceinfo = line
@@ -383,8 +386,9 @@ class mt:
         #########################################################for reading head line
         if ('technology' in line):
           #print "A header has been found"
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")            
           header = str.split(line,',')
-          header = [x.replace("\r\n","") for x in header] 
 
           #obtain index for device tags: technology,wafer,site,macro,device,test,temperature
           device_tags_index = []
@@ -406,8 +410,10 @@ class mt:
           currentdevice = ''
         ####################################################for reading rest of lines, and check if new device or test  
         if not 'technology' in line: 
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")          
           header = str.split(line,',')
-          header = [x.replace("\r\n","") for x in header]         
+         
           if (currentdevice != ",".join(header[0:(self.device_tags.index('temperature')+2)])):
             print "\nNew measurement found"
             #print "currentdevice" + currentdevice
@@ -416,8 +422,9 @@ class mt:
         ######################################################input data to arrays in dictionaries  
         if state==1:
           state = 2
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")          
           header = str.split(line,',')
-          header = [x.replace("\r\n","") for x in header] 
           if (currentdevice != ",".join(header[0:(self.device_tags.index('temperature')+2)])):
             currentdevice = ",".join(header[0:(self.device_tags.index('temperature')+2)] )       
             namedevice= header[self.device_tags.index('technology')+1]
@@ -449,8 +456,10 @@ class mt:
               
         #####################################################add data to arrays in dictionaries
         if state == 2:
+          line = line.replace("\r\n","")
+          line = line.replace("\n","")
           linedata = str.split(line,',')
-          linedata = [x.replace("\r\n","") for x in linedata] 
+
           
           count=0
           for varname in measurement_parameters_name:
