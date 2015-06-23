@@ -1,164 +1,16 @@
 #this class is to handle data obtained from measurements
 #Juan Pablo Duarte
-
+#########################################################################
 import os
-import supportfunctions as sf
 import matplotlib.pyplot as plt
 from numpy import loadtxt
 import numpy as np
-
-from numpy.matlib import repmat
-from scipy.misc import factorial
-from scipy import sparse
-from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import spsolve
-from numpy.linalg import solve, norm
 from scipy import interpolate
 
-#########################################################################
-   
-'''
-
-
-def findgmax(vg_array,ids_array,dervnumber):
-#find gmax, or max derivative, dervnumber=1 is for gmax
-  dI = np.diff(ids_array,n=dervnumber) 
-  dV = np.diff(vg_array,n=dervnumber) 
-  gmax = 0
-  index=0
-  for dVi in dV:
-    if abs(dVi)<1e-4:
-      gmaux = 0
-    else:
-      gmaux = dI[index]/dVi
-    if gmaux>gmax:
-      gmax = gmaux
-    index+=1
-  return gmaux
-
-def findSS(vg_array,ids_array,vgi,level):
-#find SS with the current at given vgi wrt current*level
-  index = 0 
-  for vg in vg_array:
-    if abs(vg-vgi)<1e-3:
-      indexids1 = index
-    index+=1
-  Ioff = ids_array[indexids1]
-  indexids2 = 0
-  index = 0 
-  diff = 1000
-  for ids in ids_array:
-    if (abs(ids-Ioff*level)<diff and index>indexids1):#abs(np.log(abs(ids))-np.log(abs(Ioff*1e3)))<diff 
-      indexids2 = index
-      diff = abs(ids-Ioff*level)
-    index+=1
-  if indexids2 == 0:
-    SS = 0
-  else:
-    SS = np.log(10)*(vg_array[indexids2]-vgi)/(np.log(ids_array[indexids2]/Ioff))
-  return SS'''
-def findvth(vg_array,ids_array,idsref):
-#find vg for a given current level
-  index = 0 
-  diff1 = 1000
-  index=0
-  for ids in ids_array:
-  #check1
-    if abs(ids-idsref)<diff1:
-      indexids1 = index
-      diff1 = abs(ids-idsref)
-    index+=1
-  
-  diff2 = abs(ids_array[indexids1-1]-idsref)
-  diff3 = abs(ids_array[indexids1+1]-idsref)  
-  
-  if(diff2<diff3):
-    indexids2 = indexids1-1
-  else:
-    indexids2 = indexids1+1  
-  
-    
-  vt=0.0259 
-  I1=ids_array[indexids1]
-  I2=ids_array[indexids2] 
-  Vg1 = vg_array[indexids1]  
-  Vg2 = vg_array[indexids2]  
-  n=((Vg2-Vg1)/vt)/(np.log(I2/I1))
-  Vth = n*vt*np.log(idsref/I1)+Vg1
-  return Vth
-
-
-#Derivative Support functions
-def mkfdstencil(x,xbar,k):
-#this funtion is sue to create finite diference method matrix
-  maxorder            = len(x)
-  h_matrix            = repmat(np.transpose(x)-xbar,maxorder,1)
-  powerfactor_matrix  = np.transpose(repmat(np.arange(0,maxorder),maxorder,1))
-  factorialindex      = np.transpose(repmat(factorial(np.arange(0,maxorder)),maxorder,1))
-  taylormatrix        = h_matrix ** powerfactor_matrix /factorialindex
-  derivativeindex     = np.zeros(maxorder)
-  derivativeindex[k]  = 1 
-  u = np.linalg.solve(taylormatrix,derivativeindex)
-  return u
-
-def K_generator(x,order):
-#this return matrix to find the derivative, x is the variable to be derived and order is the derivative order
-  N=len(x);
-  K = lil_matrix((N, N))
-  K[0,:6]=mkfdstencil(x[0:6],x[0],order)
-  K[1,:6]=mkfdstencil(x[0:6],x[1],order)
-  K[2,:6]=mkfdstencil(x[0:6],x[2],order)
-
-  i=3
-  for xbar in x[3:-3]:
-    #print i
-    K[i,i-3:i+3]=mkfdstencil(x[i-3:i+3],xbar,order)
-    i+=1
-  #print i
-  K[i,-7:-1]=mkfdstencil(x[-7:-1],x[-3],order)  
-  i+=1
-  K[i,-7:-1]=mkfdstencil(x[-7:-1],x[-2],order)
-  i+=1  
-  K[i,-7:-1]=mkfdstencil(x[-7:-1],x[-1],order)  
-  return K.tocsr()
+import supportfunctions as sp
+import devicecharacterization as devc
 
 #########################################################################
-#arrange X and Y matrices
-def rearrangearray(arrayXa,elementpercylce,numberelement):
-#this function reshpae array to be printing 
-  arrayXb = arrayXa.reshape((elementpercylce, len(arrayXa)/elementpercylce))#arrayXa.reshape(( len(arrayXa)/elementpercylce,elementpercylce))#
-  arrayXc = np.transpose(arrayXb)
-  arrayXd = arrayXc.reshape((len(arrayXa)/numberelement,numberelement))#arrayXc.reshape((numberelement,len(arrayXa)/numberelement))#
-  arrayXe = np.transpose(arrayXd)
-  return arrayXe
-
-def findelementpercylce(arrayaux):
-#this function return the number of entire sequence in the initial array
-  #first find number of elements repeated next to each other
-  firstelement = arrayaux[0]
-  lengthaux = len(arrayaux)
-  flag=1
-  i=1
-
-  elementpercylce = 0
-  while ( (i<(lengthaux+1)) and flag):
-    elementpercylce = i-1
-
-    if (abs(arrayaux[i]-firstelement)>0): #%TODO: check abs condition
-      flag=0
-    i=i+1
-
-  elementpercylce = elementpercylce+1
-  
-  #this return number of time a sequence repeat
-  indexes = []
-  b = arrayaux[0:elementpercylce]
-  for i in range(len(arrayaux)-len(b)+1):
-    if sum(abs(arrayaux[i:i+len(b)] - b))<1e-15:
-      indexes.append((i, i+len(b)))
-  return len(indexes)
-  #return elementpercylce
-
 #########################################################################
 #class definition
 class mt:
@@ -329,8 +181,7 @@ class mt:
         fileout.write(stringtoprint) 
         count+=1
       fileout.close()
-      #line1
-      
+
   ##########################################################################################################    
   ##################################            plot              ########################################## 
   ########################################################################################################## 
@@ -356,15 +207,15 @@ class mt:
       numberelementmaxpossible = len(xarray)
       if( (np.mod(len(xarray),numberelementaux)==0) and ((numberelementmaxpossible-numberelementaux)>0) ):
         numberelement = numberelementaux;
-        elementpercylce = findelementpercylce(xarray)*numberelement
+        elementpercylce = sp.findelementpercylce(xarray)*numberelement
       
       if (numberelement==0):
         numberelement = numberelementmaxpossible
         elementpercylce = numberelement
       
       #reshape matrix to plot lines
-      xarray = rearrangearray(xarray,elementpercylce,numberelement)
-      yarray = rearrangearray(yarray,elementpercylce,numberelement)        
+      xarray = sp.rearrangearray(xarray,elementpercylce,numberelement)
+      yarray = sp.rearrangearray(yarray,elementpercylce,numberelement)        
       target.close()
       
     #SAS format, for intership  
@@ -407,7 +258,7 @@ class mt:
         else:
           plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  )
       else :
-        K = K_generator(xarray[:,0],self.derivativeorder) 
+        K = sp.K_generator(xarray[:,0],self.derivativeorder) 
         if self.color=='':    
           plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize)
         else:
@@ -582,7 +433,7 @@ class mt:
           line = line.replace("\n","")          
           header = str.split(line)
           if True:
-            #DevNum	Wafer	SiteX	SiteY	Macro	Device	Wdes	Ldes
+            #DevNum Wafer SiteX SiteY Macro Device  Wdes  Ldes
             #print headernames
             namedevice= header[headernames.index('Wafer')]
             namedevice+= ','+header[headernames.index('SiteX')]
@@ -648,7 +499,8 @@ class mt:
                         for ystring in self.plot_y_variables:
                           print "ploting: " + ystring
                           yarray = self.devices[namedevice][temperature][test][ystring]
-                          
+                          if self.plot_W_normalization_flag==1:
+                            yarray = np.array(yarray)/self.devices[namedevice]['Wdes']
                           #########################update array for given limiting conditions
                           legendlimit = []
                           count=0
@@ -741,7 +593,7 @@ class mt:
                               else:
                                 plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend)
                             else :
-                              K = K_generator(xarray[:,0],self.derivativeorder) 
+                              K = sp.K_generator(xarray[:,0],self.derivativeorder) 
                               if self.color=='':    
                                 plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize, label=namelegend)
                               else:
@@ -765,9 +617,13 @@ class mt:
     for ystring in self.plot_y_variables:
       ylegend+=ystring+' '
     if (self.derivativeorder<1):
-      ax.set_ylabel(ylegend)  
+      ylegend = ylegend 
     else:
-      ax.set_ylabel('d^'+str(self.derivativeorder)+' '+ylegend+'/d'+self.plot_x_variable+'^'+str(self.derivativeorder))   
+      ylegend = 'd^'+str(self.derivativeorder)+' '+ylegend+'/d'+self.plot_x_variable+'^'+str(self.derivativeorder)
+    if self.plot_W_normalization_flag==1:
+      ylegend=ylegend+'/um'
+        
+    ax.set_ylabel(ylegend)   
     
 
   ##########################################################################################################    
@@ -786,35 +642,29 @@ class mt:
   ##########################################################################################################         
   def device_characterization(self):
     #Vth for different Vds, Tempt
+    print "...running electrical characterization of devices..."
     '''
     ['Ix', 'Is', 'Vg`', 'Vd`', 'Id', 'Ig']
-
-    self.vth_testname = 'Idgsx@Vg126d2'
-    self.vth_biasreference = 'Vg`'
-    self.vth_method = 'constant_current'
-    self.vth_biasfixed = ['Vd`']
-    self.vth_current_level = 300e-9
-    
-    Vth = [0.1,0.1,04]
-    biasfixe = [[],[],...]
-    
+M1.updateparameter('vth_testname' ,'Idgsx@Vg126d2')
+M1.updateparameter('vth_biasreference' , 'Vg`')
+M1.updateparameter('vth_method' , 'constant_current')
+M1.updateparameter('vth_biasfixed' , ['Vd`'])
+M1.updateparameter('vth_current_level' , 300e-9)
     '''
-    #DIBL
-    #SS for different Vds, Tempt
-    #print self.devices.keys()
+    
+    #Vth, and DIBL calculation
     for device in self.devices.keys():
       for temperature in self.devices[device]['temperatures']:
-        #print self.devices[device][temperature]['Idgsx@Vg126d2'].keys()
         Vref = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasreference])
         Vfixed = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasfixed[0]])#TODO: include more biases, for loop
         Ids = np.array(self.devices[device][temperature][self.vth_testname]['Id'])
         
         numbervths = len(np.unique(Vfixed))
         lengthalldata = len(Vref)
-        #Vref = Vref.reshape(numbervths,lengthalldata/numbervths)
-        #Vfixed = Vfixed.reshape(numbervths,lengthalldata/numbervths)
-
+        
         Vth = []
+        SS  = []
+        Gmmax = []
         count=0
         while (count<numbervths):
           idsref = self.vth_current_level*self.devices[device]['Wdes']/self.devices[device]['Leff']
@@ -822,13 +672,59 @@ class mt:
           Idsaux = Ids[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
           count+=1
           #print "Vth calculations"
-          Vth.append(findvth(Vrefaux,Idsaux,idsref))
-        self.devices[device][temperature]['Vth'] = Vth
-        self.devices[device][temperature]['VdVth'] = np.unique(Vfixed)
-        #print Vfixed.shape
-        #print Vfixed
-        #print self.devices[device][temperature][self.vth_testname]['Vg`']
+          vthaux = devc.findvth(Vrefaux,Idsaux,idsref)
+          Vth.append(vthaux)
+          SS.append(devc.findss(Vrefaux,Idsaux,vthaux,self.ss_vthwindow,self.ss_fitwindow))
+          Gmmax.append(devc.findGmax(Vrefaux,Idsaux)/self.devices[device]['Wdes'])
+
+        DIBL = (max(Vth)-min(Vth))/(max(Vfixed)-min(Vfixed))
+        self.devices[device][temperature]['characterization'] = {'Vth':Vth,'bias_fixed': np.unique(Vfixed), 'DIBL': DIBL, 'SS':SS}
+    '''
+    M1.updateparameter('gmmax_method' , 'ioffref')
+M1.updateparameter('ion_method' , 'ioffref')
+M1.updateparameter('ron_method' , 'contant_overdrive')
+M1.updateparameter('ron_overdrive' , 0.7)
+M1.updateparameter('vdd_ref' , 0.5)
+M1.updateparameter('ioff_ref' , 0.5)
+    '''
+    
+    for device in self.devices.keys():
+      for temperature in self.devices[device]['temperatures']:
+        Vref = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasreference])
+        Vfixed = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasfixed[0]])#TODO: include more biases, for loop
+        Ids = np.array(self.devices[device][temperature][self.vth_testname]['Id'])
         
+        numbervths = len(np.unique(Vfixed))
+        lengthalldata = len(Vref)
+        Vdsunique = np.unique(Vfixed)
+        
+        Vthlin = max(self.devices[device][temperature]['characterization']['Vth'])
+        Vgon = Vthlin+self.ron_overdrive
+        VgIoff = Vthlin+self.vgs_off
+        VgIon  = VgIoff+self.vgs_off
+        
+        Ron = []
+        Ion = []
+        Ioff = []
+        count=0
+        while (count<numbervths):
+          idsref = self.vth_current_level*self.devices[device]['Wdes']/self.devices[device]['Leff']
+          Vrefaux = Vref[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
+          Idsaux = Ids[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
+          Ron.append(devc.findRon(Vrefaux,Idsaux,Vgon,Vdsunique[count])*self.devices[device]['Wdes'])
+          SS = self.devices[device][temperature]['characterization'] ['SS'][count]
+          Ion.append(devc.findIds(Vrefaux,Idsaux,VgIon,SS)/self.devices[device]['Wdes'])
+          Ioff.append(devc.findIds(Vrefaux,Idsaux,VgIoff,SS)/self.devices[device]['Wdes'])
+          count+=1
+          
+        self.devices[device][temperature]['characterization']['Ron'] = Ron
+        self.devices[device][temperature]['characterization']['Ion'] = Ion
+        self.devices[device][temperature]['characterization']['Ioff'] = Ioff
+        
+        #self.devices[device][temperature]['characterization']['SS'] = SS
+  ##########################################################################################################    
+  ###############################  extract all the tech,macro,site,etc, from the dictionary################# 
+  ##########################################################################################################    
   def allinforeturn(self,tag):
   
     tagtoreturn = []
