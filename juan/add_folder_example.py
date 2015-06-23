@@ -39,7 +39,7 @@ count=1
 for device in M1.devices.keys():
   print "Device count: " + str(count)
   print M1.devices[device]['Leff']
-  print M1.devices[device]['temperatures']
+  print M1.devices[device]['tests']
   count+=1
 ######################################plot run
 #M1.plotdevices(1)

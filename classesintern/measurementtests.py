@@ -16,6 +16,78 @@ from numpy.linalg import solve, norm
 from scipy import interpolate
 
 #########################################################################
+   
+'''
+
+
+def findgmax(vg_array,ids_array,dervnumber):
+#find gmax, or max derivative, dervnumber=1 is for gmax
+  dI = np.diff(ids_array,n=dervnumber) 
+  dV = np.diff(vg_array,n=dervnumber) 
+  gmax = 0
+  index=0
+  for dVi in dV:
+    if abs(dVi)<1e-4:
+      gmaux = 0
+    else:
+      gmaux = dI[index]/dVi
+    if gmaux>gmax:
+      gmax = gmaux
+    index+=1
+  return gmaux
+
+def findSS(vg_array,ids_array,vgi,level):
+#find SS with the current at given vgi wrt current*level
+  index = 0 
+  for vg in vg_array:
+    if abs(vg-vgi)<1e-3:
+      indexids1 = index
+    index+=1
+  Ioff = ids_array[indexids1]
+  indexids2 = 0
+  index = 0 
+  diff = 1000
+  for ids in ids_array:
+    if (abs(ids-Ioff*level)<diff and index>indexids1):#abs(np.log(abs(ids))-np.log(abs(Ioff*1e3)))<diff 
+      indexids2 = index
+      diff = abs(ids-Ioff*level)
+    index+=1
+  if indexids2 == 0:
+    SS = 0
+  else:
+    SS = np.log(10)*(vg_array[indexids2]-vgi)/(np.log(ids_array[indexids2]/Ioff))
+  return SS'''
+def findvth(vg_array,ids_array,idsref):
+#find vg for a given current level
+  index = 0 
+  diff1 = 1000
+  index=0
+  for ids in ids_array:
+  #check1
+    if abs(ids-idsref)<diff1:
+      indexids1 = index
+      diff1 = abs(ids-idsref)
+    index+=1
+  
+  diff2 = abs(ids_array[indexids1-1]-idsref)
+  diff3 = abs(ids_array[indexids1+1]-idsref)  
+  
+  if(diff2<diff3):
+    indexids2 = indexids1-1
+  else:
+    indexids2 = indexids1+1  
+  
+    
+  vt=0.0259 
+  I1=ids_array[indexids1]
+  I2=ids_array[indexids2] 
+  Vg1 = vg_array[indexids1]  
+  Vg2 = vg_array[indexids2]  
+  n=((Vg2-Vg1)/vt)/(np.log(I2/I1))
+  Vth = n*vt*np.log(idsref/I1)+Vg1
+  return Vth
+
+
 #Derivative Support functions
 def mkfdstencil(x,xbar,k):
 #this funtion is sue to create finite diference method matrix
@@ -107,6 +179,7 @@ class mt:
     self.devices = {}
     self.device_template = {}
     self.device_info = {}
+    self.plot_all_together = 1
   def updateparameter(self,name,value):
     #this funtion update a parameter in the model
     if type(value) == type(''):
@@ -380,6 +453,7 @@ class mt:
       target = open(pathandfile, 'r')  
       state = -1 #reading header: technology,wafer,site,macro,device,test,temperature,Vd`,Vg`,Ig,Id,Is 
       countline=-1
+      countdata=0
       currentdevice = 'non'
       for line in target:
         countline+=1
@@ -416,12 +490,18 @@ class mt:
           header = str.split(line,',')
          
           if (currentdevice != ",".join(header[0:(self.device_tags.index('temperature')+2)])):
+            #if countdata>1:
+              #print self.devices[namedevice][temperature]['Idgsx@Vg126d2']['Vg`']
+            print "Previous data size: "+str(countdata)
+            countdata=0
             print "\nNew measurement found"
-            #print "currentdevice" + currentdevice
+            print "New device" + ",".join(header[0:(self.device_tags.index('temperature')+2)])
             print "New Device Data: " + ",".join(header[0:(self.device_tags.index('temperature')+2)]) 
+            
             state = 1
         ######################################################input data to arrays in dictionaries  
         if state==1:
+          countdata+=1
           state = 2
           line = line.replace("\r\n","")
           line = line.replace("\n","")          
@@ -454,13 +534,14 @@ class mt:
             testname = header[self.device_tags.index('test')+1]
             if not testname in self.devices[namedevice][temperature]:
               print "Device named "+namedevice+ ", with temperature data: "+ temperature  + " degrees, creates new test: " + testname
-              self.devices[namedevice][temperature][testname]  = self.device_template
+              self.devices[namedevice][temperature][testname]  = {}
               self.devices[namedevice]['tests'].append(testname)
               for varname in measurement_parameters_name:
                 self.devices[namedevice][temperature][testname][varname] = [] 
               
         #####################################################add data to arrays in dictionaries
         if state == 2:
+          countdata+=1
           line = line.replace("\r\n","")
           line = line.replace("\n","")
           linedata = str.split(line,',')
@@ -471,6 +552,7 @@ class mt:
             value = float(linedata[measurement_parameters_index[count]+1])
             self.devices[namedevice][temperature][testname][varname].append(value) 
             count+=1
+          
       #print self.devices[namedevice][temperature][testname]['Vg`']      
       target.close()  
   ##########################################################################################################    
@@ -511,7 +593,7 @@ class mt:
             #check if device exist (check for key in dictionary
             #print namedevice
             if not namedevice in self.device_info:
-              print "Creating device named "  +namedevice
+              #print "Creating device named "  +namedevice
               self.device_info[namedevice]  = {'DevNum':header[headernames.index('DevNum')],'Wafer':header[headernames.index('Wafer')],'SiteX':header[headernames.index('SiteX')],'SiteY':header[headernames.index('SiteY')],'Macro':header[headernames.index('Macro')],'Device':header[headernames.index('Device')],'Wdes':float(header[headernames.index('Wdes')]),'Ldes':float(header[headernames.index('Ldes')]),'Leff':float(header[headernames.index('Ldes')])-0.04} #TODO: do not hard code 0.04 for Leff calculation
     
       target.close()        
@@ -520,12 +602,42 @@ class mt:
   ##########################################################################################################        
   def plotdevices(self,fignumber):
     #plot method for data that is already inputed
-    for technology in self.plot_technology:
-      for wafer in self.plot_wafer:
-        for site in self.plot_site:
-          for macro in self.plot_macro:
-            for device in self.plot_device:
-              for temperature in self.plot_temperature:
+
+    if self.plot_technology == 'all':
+      technology_array = self.allinforeturn('technology')
+    else:
+      technology_array = self.plot_technology
+    for technology in technology_array:    
+      
+      if (self.plot_wafer == 'all'):
+        wafer_array = self.allinforeturn('wafer')
+      else:
+        wafer_array = self.plot_wafer    
+      for wafer in wafer_array:
+      
+        if self.plot_site == 'all':
+          site_array = self.allinforeturn('site')
+        else:
+          site_array = self.plot_site       
+        for site in site_array:
+        
+          if self.plot_macro == 'all':
+            macro_array = self.allinforeturn('macro')
+          else:
+            macro_array = self.plot_macro          
+          for macro in macro_array:
+          
+            if self.plot_device == 'all':
+              device_array = self.allinforeturn('device')
+            else:
+              device_array = self.plot_device             
+            for device in device_array:
+            
+              if self.plot_temperature == 'all':
+                temperature_array = self.allinforeturn('temperatures')
+              else:
+                temperature_array = self.plot_temperature             
+              for temperature in temperature_array:
                 for test in self.plot_test:
                   namedevice = technology+','+wafer+','+site+','+macro+','+device
                   if namedevice in self.devices:
@@ -534,30 +646,113 @@ class mt:
                         xarray = self.devices[namedevice][temperature][test][self.plot_x_variable]
                         #print xarray
                         for ystring in self.plot_y_variables:
-                          #print "ploting: " + ystring
-                          yarray = self.devices[namedevice][temperature][test][ystring]  
-                          plt.figure(fignumber)
+                          print "ploting: " + ystring
+                          yarray = self.devices[namedevice][temperature][test][ystring]
+                          
+                          #########################update array for given limiting conditions
+                          legendlimit = []
+                          count=0
+                          for limitinfo in self.plot_parameter_limits:
+                            legendlimit.append([])
+                            count+=1
 
-                          #log scale check  
-                          if self.ylogflag==1:
-                            yarray = abs(yarray) 
-                                  
-                          #plot variable or its derivatives: TODO: it plot derivate with respect to x-axis, update derivative with respect to any variable
-                          if (self.derivativeorder<1):  
-                            if self.color=='':    
-                              plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize  )
+                          yaux = []
+                          xaux = []
+                          count=0
+                          flagall = 0
+                          for yvalue in yarray:
+                            flag=1
+                            countlimit=0
+                            for limitinfo in self.plot_parameter_limits:
+                              if limitinfo[0] in self.devices[namedevice][temperature][test]:
+                                valueaux = self.devices[namedevice][temperature][test][limitinfo[0]][count]
+                              elif limitinfo[0] in self.devices[namedevice]:
+                                valueaux = self.devices[namedevice][limitinfo[0]]
+                              else:
+                                print "ERROR in limit"
+                                
+                              if len(limitinfo[1])==1:
+                                maxvalue = limitinfo[1][0]+1e-14
+                                minvalue = limitinfo[1][0]-1e-14
+                              else:
+                                maxvalue = max(limitinfo[1])
+                                minvalue = min(limitinfo[1])                             
+                              if not ((valueaux<maxvalue) and (valueaux>minvalue)):
+                                flag=0 
+                              countlimit+=1
+                            if flag==1:
+                              flagall=1
+                              yaux.append(yvalue)
+                              xaux.append(xarray[count])
+                              countaddlegen=0
+                              for limitinfo in self.plot_parameter_limits:
+                                if limitinfo[0] in self.devices[namedevice][temperature][test]:
+                                  valueaux = self.devices[namedevice][temperature][test][limitinfo[0]][count]
+                                elif limitinfo[0] in self.devices[namedevice]:
+                                  valueaux = self.devices[namedevice][limitinfo[0]]
+                                else:
+                                  print "ERROR in limit"                                
+                                legendlimit[countaddlegen].append(valueaux)
+                                countaddlegen+=1
+                              
+                            count+=1  
+                          
+                          if flagall==1:
+                            yarray =  yaux
+                            xarray =  xaux   
+                            
+                            #############################################check if one plot per data or all together
+                            if self.plot_all_together ==1: 
+                              plt.figure(fignumber)
                             else:
-                              plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  )
-                          else :
-                            K = K_generator(xarray[:,0],self.derivativeorder) 
-                            if self.color=='':    
-                              plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize)
-                            else:
-                              plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  )
+                              plt.figure(fignumber)
+                              fignumber+=1
+
+                            #log scale check  
+                            if self.ylogflag==1:
+                              yarray = abs(np.array(yarray)) 
+                            
+                            ###################################create legend
+                            namelegend = ''
+                            for stringaux in self.plot_legend_names:   
+                              if (stringaux == 'bias'):
+                                biasstring = ''
+                                countleg=0
+                                for limitinfo in self.plot_parameter_limits:
+                                  biasstring = biasstring + limitinfo[0] + '='+','.join(str(x) for x in list(set(legendlimit[countleg])) )+', '
+                                  countleg+=1
+                                namelegend=namelegend+biasstring
+                              elif stringaux in ['Leff','Wdes','Ldes']:
+                                namelegend=namelegend+stringaux +':'+str(self.devices[namedevice][stringaux]) + ', '
+                              else:
+                                namelegend=namelegend+locals()[stringaux] + ', '
+                            namelegend = namelegend[0:-2]
+                            ##################################create title  
+                            nametitle = ''
+                            for stringaux in self.plot_title_names : 
+                              nametitle=nametitle+locals()[stringaux] + ','
+                            ax = plt.gca()
+                            ax.set_title(nametitle)                                                         
+                            
+                            #plot variable or its derivatives: TODO: it plot derivate with respect to x-axis, update derivative with respect to any variable
+                            if (self.derivativeorder<1):  
+                              if self.color=='':    
+                                plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize  , label=namelegend)
+                              else:
+                                plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend)
+                            else :
+                              K = K_generator(xarray[:,0],self.derivativeorder) 
+                              if self.color=='':    
+                                plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize, label=namelegend)
+                              else:
+                                plt.plot( xarray, K*yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend)
       #log scale check  
     if self.ylogflag==1:
       ax = plt.gca()
       ax.set_yscale('log')
+      plt.legend(loc='lower right')#, bbox_to_anchor=(1, 0.5))
+    else:
+      plt.legend(loc='upper left')#, bbox_to_anchor=(1, 0.5))
     if self.xlogflag==1:
       ax = plt.gca()
       ax.set_xscale('log')        
@@ -572,13 +767,72 @@ class mt:
     if (self.derivativeorder<1):
       ax.set_ylabel(ylegend)  
     else:
-      ax.set_ylabel('d^'+str(self.derivativeorder)+' '+ylegend+'/d'+self.plot_x_variable+'^'+str(self.derivativeorder))       
+      ax.set_ylabel('d^'+str(self.derivativeorder)+' '+ylegend+'/d'+self.plot_x_variable+'^'+str(self.derivativeorder))   
+    
+
   ##########################################################################################################    
   ###############################  add all data from folder ######################################### 
   ####################################################################################################                   
   def addalldatainfolder(self,folder):
     data_files = [(x[0], x[2]) for x in os.walk(folder)]
+    count=1
     for datafile in data_files[0][1]:
-      print "\n Adding: "+datafile
+      print "\n Adding folder number " + str(count)+': '+datafile
       self.adddata(folder+datafile)
-                
+      count+=1
+      
+  ##########################################################################################################    
+  ###############################  calculate device electrical quantities ################################## 
+  ##########################################################################################################         
+  def device_characterization(self):
+    #Vth for different Vds, Tempt
+    '''
+    ['Ix', 'Is', 'Vg`', 'Vd`', 'Id', 'Ig']
+
+    self.vth_testname = 'Idgsx@Vg126d2'
+    self.vth_biasreference = 'Vg`'
+    self.vth_method = 'constant_current'
+    self.vth_biasfixed = ['Vd`']
+    self.vth_current_level = 300e-9
+    
+    Vth = [0.1,0.1,04]
+    biasfixe = [[],[],...]
+    
+    '''
+    #DIBL
+    #SS for different Vds, Tempt
+    #print self.devices.keys()
+    for device in self.devices.keys():
+      for temperature in self.devices[device]['temperatures']:
+        #print self.devices[device][temperature]['Idgsx@Vg126d2'].keys()
+        Vref = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasreference])
+        Vfixed = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasfixed[0]])#TODO: include more biases, for loop
+        Ids = np.array(self.devices[device][temperature][self.vth_testname]['Id'])
+        
+        numbervths = len(np.unique(Vfixed))
+        lengthalldata = len(Vref)
+        #Vref = Vref.reshape(numbervths,lengthalldata/numbervths)
+        #Vfixed = Vfixed.reshape(numbervths,lengthalldata/numbervths)
+
+        Vth = []
+        count=0
+        while (count<numbervths):
+          idsref = self.vth_current_level*self.devices[device]['Wdes']/self.devices[device]['Leff']
+          Vrefaux = Vref[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
+          Idsaux = Ids[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
+          count+=1
+          #print "Vth calculations"
+          Vth.append(findvth(Vrefaux,Idsaux,idsref))
+        self.devices[device][temperature]['Vth'] = Vth
+        self.devices[device][temperature]['VdVth'] = np.unique(Vfixed)
+        #print Vfixed.shape
+        #print Vfixed
+        #print self.devices[device][temperature][self.vth_testname]['Vg`']
+        
+  def allinforeturn(self,tag):
+  
+    tagtoreturn = []
+    for device in self.devices.keys():
+      tagtoreturn.append(self.devices[device][tag])            
+    return list(set(tagtoreturn))
+       
