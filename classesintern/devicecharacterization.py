@@ -36,12 +36,16 @@ def findvth(vg_array,ids_array,idsref):
     Vth = n*vt*np.log(idsref/I1)+Vg1
   else:
     Vth = vg_array[indexids1] 
+  
+  if Vth>max(vg_array):
+    Vth = max(vg_array)
+  if Vth<min(vg_array):
+    Vth = min(vg_array)   
    
   return Vth
   
 def Ilog(vg,nvth,I0):
   return I0*np.exp(vg/nvth)
-  
 
 def findss(vg_array,ids_array,vgi,vthwindow,fitwindow):
 #find SS with the current at given vgi wrt current*level

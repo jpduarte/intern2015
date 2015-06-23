@@ -624,8 +624,6 @@ class mt:
       ylegend=ylegend+'/um'
         
     ax.set_ylabel(ylegend)   
-    
-
   ##########################################################################################################    
   ###############################  add all data from folder ######################################### 
   ####################################################################################################                   
@@ -678,7 +676,7 @@ M1.updateparameter('vth_current_level' , 300e-9)
           Gmmax.append(devc.findGmax(Vrefaux,Idsaux)/self.devices[device]['Wdes'])
 
         DIBL = (max(Vth)-min(Vth))/(max(Vfixed)-min(Vfixed))
-        self.devices[device][temperature]['characterization'] = {'Vth':Vth,'bias_fixed': np.unique(Vfixed), 'DIBL': DIBL, 'SS':SS}
+        self.devices[device][temperature]['characterization'] = {'vth':Vth,'bias_fixed': np.unique(Vfixed), 'dibl': DIBL, 'ss':SS, 'gmmax': Gmmax}
     '''
     M1.updateparameter('gmmax_method' , 'ioffref')
 M1.updateparameter('ion_method' , 'ioffref')
@@ -698,7 +696,7 @@ M1.updateparameter('ioff_ref' , 0.5)
         lengthalldata = len(Vref)
         Vdsunique = np.unique(Vfixed)
         
-        Vthlin = max(self.devices[device][temperature]['characterization']['Vth'])
+        Vthlin = max(self.devices[device][temperature]['characterization']['vth'])
         Vgon = Vthlin+self.ron_overdrive
         VgIoff = Vthlin+self.vgs_off
         VgIon  = VgIoff+self.vgs_off
@@ -712,14 +710,14 @@ M1.updateparameter('ioff_ref' , 0.5)
           Vrefaux = Vref[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
           Idsaux = Ids[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
           Ron.append(devc.findRon(Vrefaux,Idsaux,Vgon,Vdsunique[count])*self.devices[device]['Wdes'])
-          SS = self.devices[device][temperature]['characterization'] ['SS'][count]
+          SS = self.devices[device][temperature]['characterization'] ['ss'][count]
           Ion.append(devc.findIds(Vrefaux,Idsaux,VgIon,SS)/self.devices[device]['Wdes'])
           Ioff.append(devc.findIds(Vrefaux,Idsaux,VgIoff,SS)/self.devices[device]['Wdes'])
           count+=1
           
-        self.devices[device][temperature]['characterization']['Ron'] = Ron
-        self.devices[device][temperature]['characterization']['Ion'] = Ion
-        self.devices[device][temperature]['characterization']['Ioff'] = Ioff
+        self.devices[device][temperature]['characterization']['ron'] = Ron
+        self.devices[device][temperature]['characterization']['ion'] = Ion
+        self.devices[device][temperature]['characterization']['ioff'] = Ioff
         
         #self.devices[device][temperature]['characterization']['SS'] = SS
   ##########################################################################################################    
@@ -732,3 +730,50 @@ M1.updateparameter('ioff_ref' , 0.5)
       tagtoreturn.append(self.devices[device][tag])            
     return list(set(tagtoreturn))
        
+  def plotcharacterization(self,fignumber,typeplot,xvariable,extralegend):
+  
+    if True:
+    #Vth lin vs Lg
+      xarray = []
+      yarray = []
+      for device in self.devices.keys():
+        for temperature in self.devices[device]['temperatures']:
+          #self.devices[device][temperature]['characterization'] = {'Vth':Vth,'bias_fixed': np.unique(Vfixed), 'DIBL': DIBL, 'SS':SS}
+          indexvth = sp.find_closest(self.devices[device][temperature]['characterization']['bias_fixed'], self.plot_characterization_vdref)
+          if typeplot.lower()=='dibl':
+            yarray.append(self.devices[device][temperature]['characterization'][typeplot.lower()])
+          else:
+            yarray.append(self.devices[device][temperature]['characterization'][typeplot.lower()][indexvth])
+          xarray.append(self.devices[device][xvariable])
+      plt.figure(fignumber) 
+      if typeplot.lower()=='dibl':
+        namelegend = typeplot
+      else:
+        namelegend = typeplot+'@Vds:'+str(self.plot_characterization_vdref) 
+      namelegend=namelegend+extralegend
+      if self.ylogflag==1:
+        yarray = abs(np.array(yarray))
+      if self.xlogflag==1:
+        xarray = abs(np.array(xarray))  
+              
+      if self.color=='':    
+        plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize  , label=namelegend)
+      else:
+        plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend)
+      #log scale check  
+    
+    if self.ylogflag==1:
+      ax = plt.gca()
+      ax.set_yscale('log')
+      plt.legend(loc='lower right')#, bbox_to_anchor=(1, 0.5))
+    else:
+      plt.legend(loc='upper left')#, bbox_to_anchor=(1, 0.5))
+    if self.xlogflag==1:
+      ax = plt.gca()
+      ax.set_xscale('log')        
+    
+    #x and y axis label          
+    
+    ax = plt.gca()
+    ax.set_xlabel(xvariable)      
+    ax.set_ylabel(typeplot) 

@@ -22,7 +22,7 @@ M1.updateparameter('device_tags',['technology','wafer','site','macro','device','
 
 M1.add_die_info('/home/juan/research/intern/SC_III-V/SA35FET19.txt')
 #add entire
-M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300K/')
+M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/50K/')
 
 #######################################plot set up
 M1.updateparameter('plot_technology','all')

@@ -22,7 +22,7 @@ M1.updateparameter('device_tags',['technology','wafer','site','macro','device','
 
 M1.add_die_info('/home/juan/research/intern/SC_III-V/SA35FET19.txt')
 #add entire
-M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300K/')
+M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300Kamlan/')
 
 #######################################plot set up
 M1.updateparameter('plot_technology','all')
@@ -30,7 +30,7 @@ M1.updateparameter('plot_wafer','all')
 M1.updateparameter('plot_site','all')
 M1.updateparameter('plot_macro','all')#width,35fet_GF2_FetPS_10
 M1.updateparameter('plot_device','all')#->gate length
-M1.updateparameter('plot_test',['Idgsx@Vg126d2'])
+M1.updateparameter('plot_test',['Idgs@Vg23d2'])
 M1.updateparameter('plot_temperature',['25'])
 M1.updateparameter('plot_y_variables',['Id'])
 M1.updateparameter('plot_x_variable','Vg`')
@@ -46,7 +46,7 @@ M1.updateparameter('ylogflag' , 1)
 M1.plotdevices(2)
 
 #######################################characterization set up
-M1.updateparameter('vth_testname' ,'Idgsx@Vg126d2')
+M1.updateparameter('vth_testname' ,'Idgs@Vg23d2')
 M1.updateparameter('vth_biasreference' , 'Vg`')
 M1.updateparameter('vth_method' , 'constant_current')
 M1.updateparameter('vth_biasfixed' , ['Vd`'])
@@ -85,11 +85,13 @@ M1.plotcharacterization(6,'SS','Leff','@T=300K')
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('color' , 'k')
 M1.plotcharacterization(6,'SS','Leff','@T=300K')
+#0-2
 
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'c')
 M1.plotcharacterization(5,'Ron','Leff','@T=300K')
+#0-1000
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)

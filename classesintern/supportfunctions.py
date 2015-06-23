@@ -118,3 +118,13 @@ def findelementpercylce(arrayaux):
       indexes.append((i, i+len(b)))
   return len(indexes)
   #return elementpercylce                
+
+def find_closest(A, target):
+    #A must be sorted
+    A = np.array(A)
+    idx = A.searchsorted(target)
+    idx = np.clip(idx, 1, len(A)-1)
+    left = A[idx-1]
+    right = A[idx]
+    idx -= target - left < right - target
+    return idx
