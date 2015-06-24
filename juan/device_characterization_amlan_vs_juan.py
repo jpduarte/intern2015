@@ -90,14 +90,14 @@ M1.updateparameter('color' , 'r')
 M1.plotcharacterization(5,'SS','Leff','-Amlan')
 #0-2
 
-
+M1.updateparameter('plot_characterization_fit' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'r')
 M1.plotcharacterization(6,'Ron','Leff','-Amlan')
 #0-1000
 
-
+M1.updateparameter('plot_characterization_fit' , 0)
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'r')
@@ -162,15 +162,18 @@ M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('color' , 'b')
 M1.plotcharacterization(1,'Vth','Leff','-Juan')
+plt.savefig('vthlinjuanamlan.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('symbol' , 's')
 M1.updateparameter('color' , 'b')
 M1.plotcharacterization(2,'Vth','Leff','-Juan')
+plt.savefig('vthsatjuanamlan.png', bbox_inches='tight')
 
 M1.updateparameter('symbol' , 's')
 M1.updateparameter('color' , 'b')
 M1.plotcharacterization(3,'DIBL','Leff','-Juan')
+plt.savefig('dibl_juanamlan.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('color' , 'b')
@@ -178,6 +181,7 @@ M1.updateparameter('symbol' , 's')
 M1.plotcharacterization(4,'SS','Leff','-Juan')
 axes = plt.gca()
 axes.set_ylim([0,2])
+plt.savefig('sslin_juanamlan.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('color' , 'b')
@@ -185,7 +189,10 @@ M1.updateparameter('symbol' , 'o')
 M1.plotcharacterization(5,'SS','Leff','-Juan')
 axes = plt.gca()
 axes.set_ylim([0,2])
+plt.savefig('sssat_juanamlan.png', bbox_inches='tight')
 
+
+M1.updateparameter('plot_characterization_fit' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'b')
@@ -194,14 +201,16 @@ axes = plt.gca()
 axes.set_ylim([0,1000])
 axes = plt.gca()
 axes.set_xlim([0,0.5])
+plt.savefig('ron_juanamlan.png', bbox_inches='tight')
 
-
+M1.updateparameter('plot_characterization_fit' , 0)
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'b')
 M1.plotcharacterization(7,'Gmmax','Leff','-Juan')
 axes = plt.gca()
 axes.set_ylim([0,0.005])
+plt.savefig('gmax_juanamlan.png', bbox_inches='tight')
 ########################################show plots
 
 plt.show() 

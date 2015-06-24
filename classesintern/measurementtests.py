@@ -32,6 +32,7 @@ class mt:
     self.device_template = {}
     self.device_info = {}
     self.plot_all_together = 1
+    self.plot_characterization_fit=0
   def updateparameter(self,name,value):
     #this funtion update a parameter in the model
     if type(value) == type(''):
@@ -761,7 +762,17 @@ M1.updateparameter('ioff_ref' , 0.5)
       else:
         plt.plot( xarray, yarray, self.symbol, lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend)
       #log scale check  
-    
+      if (self.plot_characterization_fit >0):
+        z = np.polyfit(np.array(xarray), np.array(yarray), self.plot_characterization_fit)
+        print "Poly Fit: "
+        print z
+        p = np.poly1d(z)
+        xaux = np.linspace(min(xarray),max(xarray),100)
+        if self.color=='': 
+          plt.plot( xaux, p(xaux), '-', lw=self.lw,markersize=self.markersize  , label=namelegend+'fit')
+        else:
+          plt.plot( xaux, p(xaux), '-', lw=self.lw,markersize=self.markersize, color=self.color  , label=namelegend+'fit')
+      
     if self.ylogflag==1:
       ax = plt.gca()
       ax.set_yscale('log')
