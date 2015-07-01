@@ -33,6 +33,9 @@ class mt:
     self.device_info = {}
     self.plot_all_together = 1
     self.plot_characterization_fit=0
+    self.plot_characterization_save = 0
+    self.plot_characterization_file_out = ''
+    self.delta_Lg = 0
   def updateparameter(self,name,value):
     #this funtion update a parameter in the model
     if type(value) == type(''):
@@ -336,7 +339,7 @@ class mt:
           state = 0
           currentdevice = ''
         ####################################################for reading rest of lines, and check if new device or test  
-        if not 'technology' in line: 
+        if (not 'technology' in line) and (state!=-1): 
           line = line.replace("\r\n","")
           line = line.replace("\n","")          
           header = str.split(line,',')
@@ -358,6 +361,7 @@ class mt:
           line = line.replace("\r\n","")
           line = line.replace("\n","")          
           header = str.split(line,',')
+          print header
           if (currentdevice != ",".join(header[0:(self.device_tags.index('temperature')+2)])):
             currentdevice = ",".join(header[0:(self.device_tags.index('temperature')+2)] )       
             namedevice= header[self.device_tags.index('technology')+1]
@@ -446,7 +450,7 @@ class mt:
             #print namedevice
             if not namedevice in self.device_info:
               #print "Creating device named "  +namedevice
-              self.device_info[namedevice]  = {'DevNum':header[headernames.index('DevNum')],'Wafer':header[headernames.index('Wafer')],'SiteX':header[headernames.index('SiteX')],'SiteY':header[headernames.index('SiteY')],'Macro':header[headernames.index('Macro')],'Device':header[headernames.index('Device')],'Wdes':float(header[headernames.index('Wdes')]),'Ldes':float(header[headernames.index('Ldes')]),'Leff':float(header[headernames.index('Ldes')])-0.04} #TODO: do not hard code 0.04 for Leff calculation
+              self.device_info[namedevice]  = {'DevNum':header[headernames.index('DevNum')],'Wafer':header[headernames.index('Wafer')],'SiteX':header[headernames.index('SiteX')],'SiteY':header[headernames.index('SiteY')],'Macro':header[headernames.index('Macro')],'Device':header[headernames.index('Device')],'Wdes':float(header[headernames.index('Wdes')]),'Ldes':float(header[headernames.index('Ldes')]),'Leff':float(header[headernames.index('Ldes')])-self.delta_Lg} #TODO: do not hard code 0.04 for Leff calculation
     
       target.close()        
   ##########################################################################################################    
@@ -660,24 +664,29 @@ M1.updateparameter('vth_current_level' , 300e-9)
         
         numbervths = len(np.unique(Vfixed))
         lengthalldata = len(Vref)
+        Vdsunique = np.unique(Vfixed)
         
         Vth = []
         SS  = []
         Gmmax = []
         count=0
+        Ionmax = []
+        Ronmax = []
         while (count<numbervths):
           idsref = self.vth_current_level*self.devices[device]['Wdes']/self.devices[device]['Leff']
           Vrefaux = Vref[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
           Idsaux = Ids[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
-          count+=1
           #print "Vth calculations"
           vthaux = devc.findvth(Vrefaux,Idsaux,idsref)
           Vth.append(vthaux)
           SS.append(devc.findss(Vrefaux,Idsaux,vthaux,self.ss_vthwindow,self.ss_fitwindow))
           Gmmax.append(devc.findGmax(Vrefaux,Idsaux)/self.devices[device]['Wdes'])
-
+          Ionmax.append(max(Idsaux)/self.devices[device]['Wdes'])
+          Ronmax.append(Vdsunique[count]/(max(Idsaux)/self.devices[device]['Wdes']) )
+          
+          count+=1
         DIBL = (max(Vth)-min(Vth))/(max(Vfixed)-min(Vfixed))
-        self.devices[device][temperature]['characterization'] = {'vth':Vth,'bias_fixed': np.unique(Vfixed), 'dibl': DIBL, 'ss':SS, 'gmmax': Gmmax}
+        self.devices[device][temperature]['characterization'] = {'vth':Vth,'bias_fixed': np.unique(Vfixed), 'dibl': DIBL, 'ss':SS, 'gmmax': Gmmax, 'ionmax':Ionmax,'ronmax':Ronmax}
     '''
     M1.updateparameter('gmmax_method' , 'ioffref')
 M1.updateparameter('ion_method' , 'ioffref')
@@ -745,7 +754,10 @@ M1.updateparameter('ioff_ref' , 0.5)
             yarray.append(self.devices[device][temperature]['characterization'][typeplot.lower()])
           else:
             yarray.append(self.devices[device][temperature]['characterization'][typeplot.lower()][indexvth])
-          xarray.append(self.devices[device][xvariable])
+          if xvariable in self.devices[device]:
+            xarray.append(self.devices[device][xvariable])
+          else:
+            xarray.append(self.devices[device][temperature]['characterization'][xvariable.lower()][indexvth])
       plt.figure(fignumber) 
       if typeplot.lower()=='dibl':
         namelegend = typeplot
@@ -788,3 +800,16 @@ M1.updateparameter('ioff_ref' , 0.5)
     ax = plt.gca()
     ax.set_xlabel(xvariable)      
     ax.set_ylabel(typeplot) 
+    
+    if (self.plot_characterization_save==1):
+      fileresult = open(self.plot_characterization_file_out, 'w') 
+      fileresult.write(xvariable+' '+typeplot+' \n')
+      #this save to text file by evaluating model
+      i=0
+      column=len(xarray)
+      rown=len(xarray)
+      while (i<rown):
+        stringtowrite = str(xarray[i])+' '+ str(yarray[i])
+        fileresult.write(stringtowrite+'\n') 
+        i+=1 
+      fileresult.close()

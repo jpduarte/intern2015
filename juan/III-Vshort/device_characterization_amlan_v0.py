@@ -97,6 +97,14 @@ M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'y')
 M1.plotcharacterization(7,'Gmmax','Leff','@T=300K')
+
+M1.updateparameter('plot_characterization_save' , 1)
+M1.updateparameter('plot_characterization_file_out' , '/home/juan/research/intern/SC_III-V/'+'300K_Ronmax_vs_Leff_Amlan.txt')
+
+M1.updateparameter('plot_characterization_vdref' , 0.05)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'y')
+M1.plotcharacterization(9,'Ronmax','Leff','@T=300K')
 ########################################show plots
 plt.show() 
 

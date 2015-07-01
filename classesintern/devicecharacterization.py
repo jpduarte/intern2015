@@ -17,7 +17,6 @@ def findvth(vg_array,ids_array,idsref):
       indexids1 = index
       diff1 = abs(ids-idsref)
     index+=1 
-  
   if not ((indexids1==0) or (indexids1==(len(vg_array)-1))):
     diff2 = abs(ids_array[indexids1-1]-idsref)
     diff3 = abs(ids_array[indexids1+1]-idsref)   
@@ -28,8 +27,8 @@ def findvth(vg_array,ids_array,idsref):
       indexids2 = indexids1+1  
 
     vt=0.0259 
-    I1=ids_array[indexids1]
-    I2=ids_array[indexids2] 
+    I1=abs(ids_array[indexids1])
+    I2=abs(ids_array[indexids2] )
     Vg1 = vg_array[indexids1]  
     Vg2 = vg_array[indexids2]  
     n=((Vg2-Vg1)/vt)/(np.log(I2/I1))
@@ -73,8 +72,13 @@ def findss(vg_array,ids_array,vgi,vthwindow,fitwindow):
     if abs(vg-vgi)<vthwindow:
       #print "fitting"
       indexids1 = index
-      parametersfit = optimization.curve_fit(Ilog, vg_array[index:index+deltaindex], ids_array[index:index+deltaindex], (0.0256,Ioff))
-      ssaux = parametersfit[0][0]*np.log(10) #SS calculation
+      #parametersfit = optimization.curve_fit(Ilog, vg_array[index:index+deltaindex], ids_array[index:index+deltaindex], (0.0256,Ioff))
+      #ssaux = parametersfit[0][0]*np.log(10) #SS calculation
+      Vg2 = vg_array[index]
+      Vg1 =vg_array[index+1]
+      I2 = abs(ids_array[index])
+      I1 = abs(ids_array[index+1]) 
+      ssaux=((Vg2-Vg1))/(np.log(I2/I1))*np.log(10)
       if ssaux<60e-3:
         ssaux = 1e6
       allSS.append(ssaux)

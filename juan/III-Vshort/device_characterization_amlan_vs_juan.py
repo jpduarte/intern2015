@@ -102,9 +102,17 @@ M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'r')
 M1.plotcharacterization(7,'Gmmax','Leff','-Amlan')
+
+M1.updateparameter('plot_characterization_fit' , 0)
+M1.updateparameter('plot_characterization_vdref' , 0.5)
+M1.updateparameter('ylogflag' , 1)
+M1.updateparameter('xlogflag' , 1)
+M1.updateparameter('color' , 'r')
+M1.plotcharacterization(8,'Ioff','Ion','-Amlan')
 ########################################show plots
 
-
+printflag = 0
+plotextraname = 'juanamlan_'
 ###################################definition of class mt
 M1 = mt.mt()
 
@@ -115,7 +123,7 @@ M1.updateparameter('device_tags',['technology','wafer','site','macro','device','
 
 M1.add_die_info('/home/juan/research/intern/SC_III-V/SA35FET19.txt')
 #add entire
-M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300K/')
+M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300Kv2/')
 
 #######################################plot set up
 M1.updateparameter('plot_technology','all')
@@ -161,57 +169,75 @@ M1.updateparameter('ylogflag' , 0)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('color' , 'b')
-M1.plotcharacterization(1,'Vth','Leff','-Juan')
-plt.savefig('vthlinjuanamlan.png', bbox_inches='tight')
+M1.plotcharacterization(1,'Vth','Leff',extralegend)
+if printflag==1:
+  plt.savefig(plotextraname+'vthlin.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('symbol' , 's')
 M1.updateparameter('color' , 'b')
-M1.plotcharacterization(2,'Vth','Leff','-Juan')
-plt.savefig('vthsatjuanamlan.png', bbox_inches='tight')
+M1.plotcharacterization(2,'Vth','Leff',extralegend)
+if printflag==1:
+  plt.savefig(plotextraname+'vthsat.png', bbox_inches='tight')
 
 M1.updateparameter('symbol' , 's')
 M1.updateparameter('color' , 'b')
-M1.plotcharacterization(3,'DIBL','Leff','-Juan')
-plt.savefig('dibl_juanamlan.png', bbox_inches='tight')
+M1.plotcharacterization(3,'DIBL','Leff',extralegend)
+axes = plt.gca()
+axes.set_xlim([0.03,1])
+if printflag==1:
+  plt.savefig(plotextraname+'dibl.png', bbox_inches='tight')
+
 
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('color' , 'b')
 M1.updateparameter('symbol' , 's')
-M1.plotcharacterization(4,'SS','Leff','-Juan')
+M1.plotcharacterization(4,'SS','Leff',extralegend)
 axes = plt.gca()
 axes.set_ylim([0,2])
-plt.savefig('sslin_juanamlan.png', bbox_inches='tight')
+if printflag==1:
+  plt.savefig(plotextraname+'sslin.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('color' , 'b')
 M1.updateparameter('symbol' , 'o')
-M1.plotcharacterization(5,'SS','Leff','-Juan')
+M1.plotcharacterization(5,'SS','Leff',extralegend)
 axes = plt.gca()
 axes.set_ylim([0,2])
-plt.savefig('sssat_juanamlan.png', bbox_inches='tight')
+if printflag==1:
+  plt.savefig(plotextraname+'sssat.png', bbox_inches='tight')
 
 
 M1.updateparameter('plot_characterization_fit' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'b')
-M1.plotcharacterization(6,'Ron','Leff','-Juan')
+M1.plotcharacterization(6,'Ron','Leff',extralegend)
 axes = plt.gca()
-axes.set_ylim([0,1000])
-axes = plt.gca()
-axes.set_xlim([0,0.5])
-plt.savefig('ron_juanamlan.png', bbox_inches='tight')
+axes.set_ylim([0,1800])
+#axes.set_xlim([0,0.5])
+if printflag==1:
+  plt.savefig(plotextraname+'ron.png', bbox_inches='tight')
 
 M1.updateparameter('plot_characterization_fit' , 0)
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'b')
-M1.plotcharacterization(7,'Gmmax','Leff','-Juan')
+M1.plotcharacterization(7,'Gmmax','Leff',extralegend)
 axes = plt.gca()
 axes.set_ylim([0,0.005])
-plt.savefig('gmax_juanamlan.png', bbox_inches='tight')
+if printflag==1:
+  plt.savefig(plotextraname+'gmax.png', bbox_inches='tight')
 ########################################show plots
+
+M1.updateparameter('plot_characterization_fit' , 0)
+M1.updateparameter('plot_characterization_vdref' , 0.5)
+M1.updateparameter('ylogflag' , 1)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'b')
+M1.plotcharacterization(8,'Ioff','Ion',extralegend)
+if printflag==1:
+  plt.savefig(plotextraname+'IonIoff_juanamlan.png', bbox_inches='tight')
 
 plt.show() 
 

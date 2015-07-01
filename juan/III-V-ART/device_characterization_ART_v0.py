@@ -16,37 +16,45 @@ import supportfunctions as sp
 M1 = mt.mt()
 
 ###################################input data for different devices
-pathfolder = '/home/juan/research/intern/data/'
-
 M1.updateparameter('device_tags',['technology','wafer','site','macro','device','test','temperature'])
 
-M1.add_die_info('/home/juan/research/intern/SC_III-V/SA35FET19.txt')
+M1.add_die_info('/home/juan/research/intern/III-V-ART/ARTinfotext.txt')
 #add entire
-M1.addalldatainfolder('/home/juan/research/intern/SC_III-V/300K/')
+M1.addalldatainfolder('/home/juan/research/intern/III-V-ART/')
 
 #######################################plot set up
 M1.updateparameter('plot_technology','all')
 M1.updateparameter('plot_wafer','all')
 M1.updateparameter('plot_site','all')
-M1.updateparameter('plot_macro','all')#width,35fet_GF2_FetPS_10
+M1.updateparameter('plot_macro',['COLADA_JTK_Device1N'])#width,35fet_GF2_FetPS_10
 M1.updateparameter('plot_device','all')#->gate length
-M1.updateparameter('plot_test',['Idgsx@Vg126d2'])
+M1.updateparameter('plot_test',['IdVgNFET_floating'])
 M1.updateparameter('plot_temperature',['25'])
 M1.updateparameter('plot_y_variables',['Id'])
 M1.updateparameter('plot_x_variable','Vg`')
 M1.updateparameter('plot_legend_names',['Leff','Wdes','bias'])#
 M1.updateparameter('plot_title_names',['technology','wafer','site','macro'])
-M1.updateparameter('plot_parameter_limits',[ ['Vd`',[0.05]] ])#, ['Leff',[0.2,0.3]]
+M1.updateparameter('plot_parameter_limits',[ ['Vd`',[0.05]] ])#, 
 M1.updateparameter('plot_W_normalization_flag',1)#
 ######################################plot run
+M1.updateparameter('symbol' , '-')
 M1.updateparameter('plot_all_together' , 1)
 M1.plotdevices(1)
 
+M1.updateparameter('plot_y_variables',['Is'])
+M1.updateparameter('symbol' , '--')
+M1.plotdevices(1)
+
+M1.updateparameter('plot_y_variables',['Id'])
+M1.updateparameter('symbol' , '-')
 M1.updateparameter('ylogflag' , 1)
+M1.plotdevices(2)
+M1.updateparameter('plot_y_variables',['Is'])
+M1.updateparameter('symbol' , '--')
 M1.plotdevices(2)
 
 #######################################characterization set up
-M1.updateparameter('vth_testname' ,'Idgsx@Vg126d2')
+M1.updateparameter('vth_testname' ,'IdVgNFET_floating')
 M1.updateparameter('vth_biasreference' , 'Vg`')
 M1.updateparameter('vth_method' , 'constant_current')
 M1.updateparameter('vth_biasfixed' , ['Vd`'])
@@ -64,6 +72,15 @@ M1.updateparameter('vgs_off' , -0.3)
 
 M1.device_characterization()
 
+M1.updateparameter('plot_characterization_save' , 1)
+M1.updateparameter('plot_characterization_file_out' , '/home/juan/research/intern/III-V-ART/'+'III-V-ART_Ronmax_vs_Leff.txt')
+
+M1.updateparameter('plot_characterization_vdref' , 0.05)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'y')
+M1.plotcharacterization(9,'Ronmax','Leff','@T=300K')
+
+'''
 M1.updateparameter('ylogflag' , 0)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('plot_characterization_vdref' , 0.05)
@@ -85,16 +102,26 @@ M1.plotcharacterization(6,'SS','Leff','@T=300K')
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('color' , 'k')
 M1.plotcharacterization(6,'SS','Leff','@T=300K')
+#0-2
 
 M1.updateparameter('plot_characterization_vdref' , 0.05)
 M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'c')
 M1.plotcharacterization(5,'Ron','Leff','@T=300K')
+#0-1000
 
 M1.updateparameter('plot_characterization_vdref' , 0.5)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'y')
 M1.plotcharacterization(7,'Gmmax','Leff','@T=300K')
+
+M1.updateparameter('plot_characterization_save' , 1)
+M1.updateparameter('plot_characterization_file_out' , '/home/juan/research/intern/SC_III-V/'+'300K_Ronmax_vs_Leff_Amlan.txt')
+
+M1.updateparameter('plot_characterization_vdref' , 0.05)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'y')
+M1.plotcharacterization(9,'Ronmax','Leff','@T=300K')'''
 ########################################show plots
 plt.show() 
 
