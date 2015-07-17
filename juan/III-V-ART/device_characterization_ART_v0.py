@@ -80,6 +80,14 @@ M1.updateparameter('xlogflag' , 0)
 M1.updateparameter('color' , 'y')
 M1.plotcharacterization(9,'Ronmax','Leff','@T=300K')
 
+M1.updateparameter('plot_characterization_save' , 1)
+M1.updateparameter('plot_characterization_file_out' , '/home/juan/research/intern/III-V-ART/'+'III-V-ART_Ionmax_vs_Leff.txt')
+
+M1.updateparameter('plot_characterization_vdref' , 0.05)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'y')
+M1.plotcharacterization(9,'Ionmax','Leff','@T=300K')
+
 '''
 M1.updateparameter('ylogflag' , 0)
 M1.updateparameter('xlogflag' , 1)

@@ -36,6 +36,7 @@ class mt:
     self.plot_characterization_save = 0
     self.plot_characterization_file_out = ''
     self.delta_Lg = 0
+    self.legend_loc = 'lower right'
   def updateparameter(self,name,value):
     #this funtion update a parameter in the model
     if type(value) == type(''):
@@ -291,7 +292,7 @@ class mt:
   #technology,wafer,site,macro,device,test,temperature,Vd`,Vg`,Ig,Id,Is
   #RsearchAtypical,KL35LC12-S01,18,16,35LC_GL1_M04,FET05,Idgs@Vg51d3,25, -5.000e-02,-5.000e-01,-7.9736e-11, 1.0170e-12, 4.9877e-11  
   
-  '''
+    '''
   1) identify input parameter names and order in head: ex, technology,wafer,site,macro,device,test,temperature,Vd`,Vg`,Ig,Id,Is 
   
   2) check if device exists: technology,wafer,site,macro,device
@@ -301,7 +302,7 @@ class mt:
   4) add data, until new device is found, repeat
   
   '''      
-  def adddata(self,pathandfile):
+  def adddata(self,pathandfile,temperaturein=300):
     
     if self.filetype=='SAS':
       
@@ -381,11 +382,13 @@ class mt:
               self.devices[namedevice]['Leff'] = self.device_info[namedevice]['Leff'] 
             
             #check if temperature exists 
-            temperature = header[self.device_tags.index('temperature')+1]
+            temperature = str(temperaturein)#header[self.device_tags.index('temperature')+1]
+            #temperature = str(temperaturein)#header[self.device_tags.index('temperature')+1]
             if not temperature in self.devices[namedevice]:
               print "Device named "+namedevice+ ", creates a new temperature data: "+ temperature  + " degrees"
               self.devices[namedevice][temperature]  = {}           
-              self.devices[namedevice]['temperatures'].append(temperature)
+              #self.devices[namedevice]['temperatures'].append(temperature)
+              self.devices[namedevice]['temperatures'] = temperature
             #check if test exists
             testname = header[self.device_tags.index('test')+1]
             if not testname in self.devices[namedevice][temperature]:
@@ -607,9 +610,9 @@ class mt:
     if self.ylogflag==1:
       ax = plt.gca()
       ax.set_yscale('log')
-      plt.legend(loc='lower right')#, bbox_to_anchor=(1, 0.5))
+      plt.legend(loc=self.legend_loc)#, bbox_to_anchor=(1, 0.5))
     else:
-      plt.legend(loc='upper left')#, bbox_to_anchor=(1, 0.5))
+      plt.legend(loc=self.legend_loc)#, bbox_to_anchor=(1, 0.5))
     if self.xlogflag==1:
       ax = plt.gca()
       ax.set_xscale('log')        
@@ -632,12 +635,12 @@ class mt:
   ##########################################################################################################    
   ###############################  add all data from folder ######################################### 
   ####################################################################################################                   
-  def addalldatainfolder(self,folder):
+  def addalldatainfolder(self,folder, temperature=300):
     data_files = [(x[0], x[2]) for x in os.walk(folder)]
     count=1
     for datafile in data_files[0][1]:
       print "\n Adding folder number " + str(count)+': '+datafile
-      self.adddata(folder+datafile)
+      self.adddata(folder+datafile,temperature)
       count+=1
       
   ##########################################################################################################    
@@ -737,10 +740,16 @@ M1.updateparameter('ioff_ref' , 0.5)
   
     tagtoreturn = []
     for device in self.devices.keys():
-      tagtoreturn.append(self.devices[device][tag])            
+      tagtoreturn.append(self.devices[device][tag]) 
+    #print tag+':'
+    #print tagtoreturn
     return list(set(tagtoreturn))
        
   def plotcharacterization(self,fignumber,typeplot,xvariable,extralegend):
+    
+    if (self.plot_characterization_save==1):
+      fileresult = open(self.plot_characterization_file_out, 'w') 
+      fileresult.write('device '+xvariable+' '+typeplot+' \n')
   
     if True:
     #Vth lin vs Lg
@@ -758,6 +767,10 @@ M1.updateparameter('ioff_ref' , 0.5)
             xarray.append(self.devices[device][xvariable])
           else:
             xarray.append(self.devices[device][temperature]['characterization'][xvariable.lower()][indexvth])
+            
+          if (self.plot_characterization_save==1):
+            stringtowrite = device+' '+str(xarray[-1])+' '+ str(yarray[-1])
+            fileresult.write(stringtowrite+'\n') 
       plt.figure(fignumber) 
       if typeplot.lower()=='dibl':
         namelegend = typeplot
@@ -802,6 +815,8 @@ M1.updateparameter('ioff_ref' , 0.5)
     ax.set_ylabel(typeplot) 
     
     if (self.plot_characterization_save==1):
+      fileresult.close()
+    '''if (self.plot_characterization_save==1):
       fileresult = open(self.plot_characterization_file_out, 'w') 
       fileresult.write(xvariable+' '+typeplot+' \n')
       #this save to text file by evaluating model
@@ -812,4 +827,4 @@ M1.updateparameter('ioff_ref' , 0.5)
         stringtowrite = str(xarray[i])+' '+ str(yarray[i])
         fileresult.write(stringtowrite+'\n') 
         i+=1 
-      fileresult.close()
+      fileresult.close()'''
