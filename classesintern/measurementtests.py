@@ -660,7 +660,8 @@ M1.updateparameter('vth_current_level' , 300e-9)
     
     #Vth, and DIBL calculation
     for device in self.devices.keys():
-      for temperature in self.devices[device]['temperatures']:
+      if True: #for temperature in self.devices[device]['temperatures']:
+        temperature = self.devices[device]['temperatures'] #this and previous line is to fix bug from previous format, now we only assume on cllass per temperature
         Vref = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasreference])
         Vfixed = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasfixed[0]])#TODO: include more biases, for loop
         Ids = np.array(self.devices[device][temperature][self.vth_testname]['Id'])
@@ -700,7 +701,8 @@ M1.updateparameter('ioff_ref' , 0.5)
     '''
     
     for device in self.devices.keys():
-      for temperature in self.devices[device]['temperatures']:
+      if True:#for temperature in self.devices[device]['temperatures']:
+        temperature = self.devices[device]['temperatures']
         Vref = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasreference])
         Vfixed = np.array(self.devices[device][temperature][self.vth_testname][self.vth_biasfixed[0]])#TODO: include more biases, for loop
         Ids = np.array(self.devices[device][temperature][self.vth_testname]['Id'])
@@ -756,7 +758,8 @@ M1.updateparameter('ioff_ref' , 0.5)
       xarray = []
       yarray = []
       for device in self.devices.keys():
-        for temperature in self.devices[device]['temperatures']:
+       if True:# for temperature in self.devices[device]['temperatures']:
+          temperature = self.devices[device]['temperatures']
           #self.devices[device][temperature]['characterization'] = {'Vth':Vth,'bias_fixed': np.unique(Vfixed), 'DIBL': DIBL, 'SS':SS}
           indexvth = sp.find_closest(self.devices[device][temperature]['characterization']['bias_fixed'], self.plot_characterization_vdref)
           if typeplot.lower()=='dibl':
