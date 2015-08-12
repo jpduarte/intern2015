@@ -31,7 +31,7 @@ M1.updateparameter('plot_site','all')
 M1.updateparameter('plot_macro','all')#width,35fet_GF2_FetPS_10
 M1.updateparameter('plot_device','all')#->gate length
 M1.updateparameter('plot_test',['Idgs@Vg23d2'])
-M1.updateparameter('plot_temperature',['25'])
+M1.updateparameter('plot_temperature',['300'])
 M1.updateparameter('plot_y_variables',['Id'])
 M1.updateparameter('plot_x_variable','Vg`')
 M1.updateparameter('plot_legend_names',['Leff','Wdes','bias'])#
@@ -109,10 +109,18 @@ M1.updateparameter('ylogflag' , 1)
 M1.updateparameter('xlogflag' , 1)
 M1.updateparameter('color' , 'r')
 M1.plotcharacterization(8,'Ioff','Ion','-Amlan')
+
+M1.updateparameter('plot_characterization_fit' , 0)
+M1.updateparameter('plot_characterization_vdref' , 0.5)
+M1.updateparameter('ylogflag' , 1)
+M1.updateparameter('xlogflag' , 0)
+M1.updateparameter('color' , 'r')
+M1.plotcharacterization(9,'Iofffloor','Leff','-Amlan')
 ########################################show plots
 
 printflag = 0
 plotextraname = 'juanamlan_'
+extralegend = ''
 ###################################definition of class mt
 M1 = mt.mt()
 
@@ -132,7 +140,7 @@ M1.updateparameter('plot_site','all')
 M1.updateparameter('plot_macro','all')#width,35fet_GF2_FetPS_10
 M1.updateparameter('plot_device','all')#->gate length
 M1.updateparameter('plot_test',['Idgsx@Vg126d2'])
-M1.updateparameter('plot_temperature',['25'])
+M1.updateparameter('plot_temperature',['300'])
 M1.updateparameter('plot_y_variables',['Id'])
 M1.updateparameter('plot_x_variable','Vg`')
 M1.updateparameter('plot_legend_names',['Leff','Wdes','bias'])#
@@ -238,6 +246,20 @@ M1.updateparameter('color' , 'b')
 M1.plotcharacterization(8,'Ioff','Ion',extralegend)
 if printflag==1:
   plt.savefig(plotextraname+'IonIoff_juanamlan.png', bbox_inches='tight')
+  
+  
+
+M1.updateparameter('plot_characterization_save' , 1)
+M1.updateparameter('plot_characterization_file_out' , '/home/juan/research/intern/SC_III-V/'+'Iofffloor_vs_Ronmax_SAT_300K.txt')
+  
+M1.updateparameter('plot_characterization_fit' , 0)
+M1.updateparameter('plot_characterization_vdref' , 0.5)
+M1.updateparameter('ylogflag' , 1)
+M1.updateparameter('xlogflag' , 1)
+M1.updateparameter('color' , 'b')
+M1.updateparameter('legend_loc' , 'upper right')
+
+M1.plotcharacterization(9,'Iofffloor','Ronmax',extralegend)  
 
 plt.show() 
 

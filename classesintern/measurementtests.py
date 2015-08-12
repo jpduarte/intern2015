@@ -613,6 +613,8 @@ class mt:
       plt.legend(loc=self.legend_loc)#, bbox_to_anchor=(1, 0.5))
     else:
       plt.legend(loc=self.legend_loc)#, bbox_to_anchor=(1, 0.5))
+      ax = plt.gca()
+      ax.set_yscale('linear')
     if self.xlogflag==1:
       ax = plt.gca()
       ax.set_xscale('log')        
@@ -676,6 +678,7 @@ M1.updateparameter('vth_current_level' , 300e-9)
         count=0
         Ionmax = []
         Ronmax = []
+        Iofffloor = []
         while (count<numbervths):
           idsref = self.vth_current_level*self.devices[device]['Wdes']/self.devices[device]['Leff']
           Vrefaux = Vref[count*lengthalldata/numbervths:(count+1)*lengthalldata/numbervths]
@@ -687,10 +690,10 @@ M1.updateparameter('vth_current_level' , 300e-9)
           Gmmax.append(devc.findGmax(Vrefaux,Idsaux)/self.devices[device]['Wdes'])
           Ionmax.append(max(Idsaux)/self.devices[device]['Wdes'])
           Ronmax.append(Vdsunique[count]/(max(Idsaux)/self.devices[device]['Wdes']) )
-          
+          Iofffloor.append(min(Idsaux)/self.devices[device]['Wdes'])
           count+=1
         DIBL = (max(Vth)-min(Vth))/(max(Vfixed)-min(Vfixed))
-        self.devices[device][temperature]['characterization'] = {'vth':Vth,'bias_fixed': np.unique(Vfixed), 'dibl': DIBL, 'ss':SS, 'gmmax': Gmmax, 'ionmax':Ionmax,'ronmax':Ronmax}
+        self.devices[device][temperature]['characterization'] = {'vth':Vth,'bias_fixed': np.unique(Vfixed), 'dibl': DIBL, 'ss':SS, 'gmmax': Gmmax, 'ionmax':Ionmax,'ronmax':Ronmax,'iofffloor':Iofffloor}
     '''
     M1.updateparameter('gmmax_method' , 'ioffref')
 M1.updateparameter('ion_method' , 'ioffref')
@@ -751,7 +754,7 @@ M1.updateparameter('ioff_ref' , 0.5)
     
     if (self.plot_characterization_save==1):
       fileresult = open(self.plot_characterization_file_out, 'w') 
-      fileresult.write('device '+xvariable+' '+typeplot+' \n')
+      fileresult.write('device '+'Leff Wdes '+xvariable+' '+typeplot+' \n')
   
     if True:
     #Vth lin vs Lg
@@ -772,7 +775,7 @@ M1.updateparameter('ioff_ref' , 0.5)
             xarray.append(self.devices[device][temperature]['characterization'][xvariable.lower()][indexvth])
             
           if (self.plot_characterization_save==1):
-            stringtowrite = device+' '+str(xarray[-1])+' '+ str(yarray[-1])
+            stringtowrite = device+' '+str(self.devices[device]['Leff'])+' '+str(self.devices[device]['Wdes'])+' '+ str(xarray[-1])+' '+ str(yarray[-1])
             fileresult.write(stringtowrite+'\n') 
       plt.figure(fignumber) 
       if typeplot.lower()=='dibl':
@@ -804,9 +807,7 @@ M1.updateparameter('ioff_ref' , 0.5)
     if self.ylogflag==1:
       ax = plt.gca()
       ax.set_yscale('log')
-      plt.legend(loc='lower right')#, bbox_to_anchor=(1, 0.5))
-    else:
-      plt.legend(loc='upper left')#, bbox_to_anchor=(1, 0.5))
+    plt.legend(loc=self.legend_loc)#, bbox_to_anchor=(1, 0.5))
     if self.xlogflag==1:
       ax = plt.gca()
       ax.set_xscale('log')        
